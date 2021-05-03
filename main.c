@@ -1,3 +1,5 @@
+#include "engine.h"
+#include "list_funcs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -9,8 +11,6 @@
  * Implement leaderboard
  * Implement colors
  */
-#include "engine.h"
-#include "list_funcs.h"
 int main() {
   char grid[H + 2][W + 1 + 2]; // Grid
   int play = 1;                // Game loop
