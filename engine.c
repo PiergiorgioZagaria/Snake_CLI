@@ -2,6 +2,7 @@
 #include "list_funcs.h"
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
 
 void show(char grid[][W + 3]) {
   int i, j;
@@ -144,4 +145,25 @@ int move_player(Ptr_node *player, char *input, int *orientation, vec *point,
     *player = inserisciInTesta(*player, *vtmp);
   }
   return 1;
+}
+
+void* get_input(void * args){
+	use_args *actual_args = args;
+	*(actual_args->my_char) = (char)getchar();
+	printf("\nGot char\n");
+	*(actual_args->got_char) = 1;
+	free(actual_args);
+}
+
+void set_input(int* got_input,char* input,pthread_t *t1){
+	if(*got_input){
+		*got_input = 0;
+		use_args *args = malloc(sizeof *args);
+		args->my_char = input;
+		args->got_char = got_input;
+		if(pthread_create(t1,NULL,&get_input,args) != 0){
+			printf("Err creazione thread\n");
+			exit(1);
+		}
+	}
 }
