@@ -1,6 +1,7 @@
 #ifndef ENGINE_H_INCLUDED
 #define ENGINE_H_INCLUDED
 #include <stdio.h>
+#include "list_funcs.h"
 enum dir { UP, RIGHT, DOWN, LEFT };
 #define W 50
 #define H 25
@@ -19,4 +20,8 @@ enum dir { UP, RIGHT, DOWN, LEFT };
 
 void show(char grid[][W + 3]);
 void create_grid(char grid[][W + 1 + 2]);
+void initialize_player(char grid[][W + 1 + 2], int *x, int *y, vec *vtmp,
+                       Ptr_node *player, int *orientation, vec *point,char* input);
+void show_options(char grid[][W+1+2],int *len);
+int move_player(Ptr_node *player,char *input,int *orientation,vec *point,int *len,vec* vtmp);
 #endif

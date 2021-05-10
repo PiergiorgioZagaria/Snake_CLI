@@ -4,118 +4,74 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-
+#include <termios.h>
+#include <pthread.h>
 /* TODO
- * Use select
+ * Implement Input
  * Implement settings
  * Implement leaderboard
  * Implement colors
  */
+
+typedef struct {
+	char* my_char;
+	int*  got_char;
+} use_args;
+
+void* get_input(void * args){
+	use_args *actual_args = args;
+	*(actual_args->my_char) = (char)getchar();
+	printf("\nGot char\n");
+	*(actual_args->got_char) = 1;
+	free(actual_args);
+}
+
 int main() {
+  pthread_t t1;
+  static struct termios oldt,newt;
+  char input;                  // Input (called play before)
+  int got_input = 1;
   char grid[H + 2][W + 1 + 2]; // Grid
-  int play = 1;                // Game loop
   int i, j;                    // Iterators
   Ptr_node player = NULL;      // Player position
   int x, y;
   vec vtmp;
   int orientation;
-  int len = 2; // Starting len
-  vec point;   // The position of the point
-  srand(time(NULL));
+  int len = 2; 				  // Starting len
+  vec point;   				  // The position of the point
 
+  tcgetattr(STDIN_FILENO,&oldt);
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON); 
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
   // Initialize grid
   create_grid(grid);
-
-  // Initialize player between x:10,W-10 y:5,H-5
-  x = 10 + (rand() % (W - 20));
-  y = 5 + (rand() % (H - 10));
-  vtmp.x = x;
-  vtmp.y = y;
-  player = inserisciInTesta(player, vtmp);
-  orientation = rand() % 4;
-
-  if (orientation == UP) {
-    grid[y][x] = '@';
-    grid[y + 1][x] = '*';
-    vtmp.y = y + 1;
-  } else if (orientation == RIGHT) {
-    grid[y][x] = '@';
-    grid[y][x - 1] = '*';
-    vtmp.x = x - 1;
-  } else if (orientation == DOWN) {
-    grid[y][x] = '@';
-    grid[y - 1][x] = '*';
-    vtmp.y = y - 1;
-  } else {
-    grid[y][x] = '@';
-    grid[y][x + 1] = '*';
-    vtmp.x = x + 1;
-  }
-  player = inserisciInTesta(player, vtmp);
-  // Initialize point
-  point.x = 1 + rand() % W;
-  point.y = 1 + rand() % H;
-  grid[point.y][point.x] = '?';
+  initialize_player(grid, &x, &y, &vtmp, &player, &orientation, &point,&input);
 
   // Game loop
-  while (play + 1) {
-    show(grid);
-    printf("Quit: 0\t: 1\t: 2\t: 3\t: 4\n\n");
-    printf("Your score is: %d\n\n", len - 2);
-    scanf("%d", &play);
+  while (input != 'q') {
 
-    // Move player
-    // First the body
-    Ptr_node tmp = player;
-    while (tmp->next) {
-      tmp->pos.x = tmp->next->pos.x;
-      tmp->pos.y = tmp->next->pos.y;
-      tmp = tmp->next;
-    }
-    // Then the head
-    switch (play - 1) {
-    case -1:
-      printf("\nYou quit the game, See you next time ( ͡ᵔ ͜ʖ ͡ᵔ ) \n");
+    show_options(grid, &len);
+
+    // TODO Input
+    /* if (scanf("%c", &input) == 0) { */
+    /*   printf("Can't accept that key\n"); */
+    /*   return 1; */
+    /* } */
+	if(got_input){
+		got_input = 0;
+		use_args *args = malloc(sizeof *args);
+		args->my_char = &input;
+		args->got_char = &got_input;
+		if(pthread_create(&t1,NULL,&get_input,args) != 0){
+			printf("Err creazione thread\n");
+			return 1;
+		}
+	}
+
+    if (!move_player(&player, &input, &orientation, &point, &len, &vtmp)) {
       return 0;
-    case UP:
-      orientation = UP;
-      break;
-    case RIGHT:
-      orientation = RIGHT;
-      break;
-    case DOWN:
-      orientation = DOWN;
-      break;
-    case LEFT:
-      orientation = LEFT;
-      break;
     }
-    switch (orientation) {
-    case UP:
-      tmp->pos.y -= 1;
-      break;
-    case RIGHT:
-      tmp->pos.x += 1;
-      break;
-    case DOWN:
-      tmp->pos.y += 1;
-      break;
-    case LEFT:
-      tmp->pos.x -= 1;
-      break;
-    }
-
-    if (tmp->pos.x == point.x && tmp->pos.y == point.y) {
-      point.x = 1 + rand() % W; // Spawn new point
-      point.y = 1 + rand() % H;
-      len += 1; // Points + 1
-      vtmp.x = player->pos.x;
-      vtmp.y = player->pos.y;
-      player = inserisciInTesta(player, vtmp);
-    }
-
-    // Update the grid
-    // First clear the grid
     for (i = 0; i < H; i++) {
       for (j = 0; j < W; j++) {
         grid[i + 1][j + 1] = ' ';
@@ -123,7 +79,7 @@ int main() {
     }
 
     // Then draw player
-    tmp = player;
+    Ptr_node tmp = player;
     while (tmp->next) {
       grid[tmp->pos.y][tmp->pos.x] = '*';
       tmp = tmp->next;
@@ -136,5 +92,9 @@ int main() {
     usleep(100000);
     printf(CLEAR);
   }
+  if(pthread_join(t1,NULL) != 0){
+    printf("Err joining threads\n");
+  }
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
   return 0;
 }
