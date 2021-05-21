@@ -1,73 +1,32 @@
-#include "engine.h"
-#include "list_funcs.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-#include <termios.h>
-#include <pthread.h>
-/* TODO
- * Implement Input
- * Implement settings
- * Implement leaderboard
- * Implement colors
- */
+#include "game.h"
 
-int main() {
-  pthread_t t1;
-  static struct termios oldt,newt;
-  char input;                  // Input (called play before)
-  int got_input = 1;
-  char grid[H + 2][W + 1 + 2]; // Grid
-  int i, j;                    // Iterators
-  Ptr_node player = NULL;      // Player position
-  int x, y;
-  vec vtmp;
-  int orientation;
-  int len = 2; 				  // Starting len
-  vec point;   				  // The position of the point
-
-  tcgetattr(STDIN_FILENO,&oldt);
-  newt = oldt;
-  newt.c_lflag &= ~(ICANON); 
-  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-  // Initialize grid
-  create_grid(grid);
-  initialize_player(grid, &x, &y, &vtmp, &player, &orientation, &point,&input);
-
-  // Game loop
-  while (input != 'q') {
-
-    show_options(grid, &len);
-
-    set_input(&got_input,&input,&t1);
-
-    if (!move_player(&player, &input, &orientation, &point, &len, &vtmp)) {
-      return 0;
+int main(){
+    char choice;
+    system("toilet \"Snake\" -f mono12 -W --filter border --filter gay | sed \'s/^/                                            /\'");    
+    while (1){
+        printf("\t\t\t\t\t\t\tGo to Settings: S\n");
+        printf("\t\t\t\t\t\t\tPrint Leaderboard: L\n");
+        printf("\t\t\t\t\t\t\tExit: Q\n");
+        printf("\t\t\t\t\t\t\tPlay: P\n");
+        scanf("%c",&choice);
+        if (choice == 'P'){
+            if(main_game()){
+                printf("Something went wrong during the game\n");
+                return 1;
+            }else{
+                printf("Going back to main menu\n");
+                system("toilet \"Snake\" -f mono12 -W --filter border --filter gay | sed \'s/^/                                            /\'");
+            }
+        }else if(choice == 'S'){
+            printf("Settings not implemented yet\n");
+        }else if(choice == 'L'){
+            printf("Leaderboard not implemented yet\n");
+        }else if(choice == 'Q'){
+            printf("Thank you for playing 😄\n");
+            break;
+        }
     }
-    for (i = 0; i < H; i++) {
-      for (j = 0; j < W; j++) {
-        grid[i + 1][j + 1] = ' ';
-      }
-    }
-
-    // Then draw player
-    Ptr_node tmp = player;
-    while (tmp->next) {
-      grid[tmp->pos.y][tmp->pos.x] = '*';
-      tmp = tmp->next;
-    }
-    grid[tmp->pos.y][tmp->pos.x] = '@';
-
-    // Draw the point
-    grid[point.y][point.x] = '?';
-
-    usleep(100000);
-    printf(CLEAR);
-  }
-  if(pthread_join(t1,NULL) != 0){
-    printf("Err joining threads\n");
-  }
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-  return 0;
+    return 0;
 }
