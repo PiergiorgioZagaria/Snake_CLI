@@ -10,7 +10,8 @@ int main(){
         printf("\t\t\t\t\t\t\tPrint Leaderboard: L\n");
         printf("\t\t\t\t\t\t\tExit: Q\n");
         printf("\t\t\t\t\t\t\tPlay: P\n");
-        scanf("%c",&choice);
+        fflush(stdin);
+        scanf(" %c",&choice);
         if (choice == 'P'){
             if(main_game()){
                 printf("Something went wrong during the game\n");
@@ -26,6 +27,8 @@ int main(){
         }else if(choice == 'Q'){
             printf("Thank you for playing 😄\n");
             break;
+        }else if (choice != '\n'){
+            printf("Not a valid command\n");
         }
     }
     return 0;
